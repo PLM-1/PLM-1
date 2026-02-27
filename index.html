@@ -26,15 +26,15 @@
 
     <section id="admin-panel" class="admin-only max-w-6xl mx-auto mt-8 p-6 glass rounded-2xl border-l-4 border-red-600 fade-in">
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-red-500">Admin Command Center</h2>
-            <button onclick="triggerDeath()" class="bg-black text-red-600 border border-red-900 px-4 py-1 rounded text-xs hover:bg-red-600 transition">EXECUTE DEATH</button>
+            <h2 class="text-xl font-bold text-red-500">Admin Dashboard</h2>
+            <button id="death-btn" class="bg-black text-red-600 border border-red-900 px-4 py-1 rounded text-xs hover:bg-red-600 transition">EXECUTE DEATH</button>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="space-y-3 p-4 bg-white/5 rounded-xl border border-white/10">
                 <p class="text-xs font-bold text-yellow-500 uppercase">Branding</p>
                 <input type="text" id="new-site-name" placeholder="Rename Website" class="admin-input">
-                <button onclick="changeSiteName()" class="w-full bg-yellow-600 py-2 rounded font-bold text-xs">UPDATE NAME</button>
+                <button id="update-name-btn" class="w-full bg-yellow-600 py-2 rounded font-bold text-xs">UPDATE NAME</button>
             </div>
             <div class="space-y-3 p-4 bg-white/5 rounded-xl border border-white/10">
                 <p class="text-xs font-bold text-blue-400 uppercase">Inventory</p>
@@ -42,12 +42,12 @@
                 <input type="text" id="prod-category" placeholder="Category" class="admin-input">
                 <input type="number" id="prod-price" placeholder="Price" class="admin-input">
                 <input type="file" id="prod-img" accept="image/*" class="text-[10px] text-gray-500">
-                <button onclick="uploadProduct()" id="upload-btn" class="w-full bg-blue-600 py-2 rounded font-bold text-xs">ADD PRODUCT</button>
+                <button id="add-prod-btn" class="w-full bg-blue-600 py-2 rounded font-bold text-xs">ADD PRODUCT</button>
             </div>
             <div class="space-y-3 p-4 bg-white/5 rounded-xl border border-white/10">
                 <p class="text-xs font-bold text-purple-400 uppercase">Sections</p>
                 <input type="text" id="section-name" placeholder="Section Title" class="admin-input">
-                <button onclick="addNewSection()" class="w-full bg-purple-600 py-2 rounded font-bold text-xs">CREATE SECTION</button>
+                <button id="add-section-btn" class="w-full bg-purple-600 py-2 rounded font-bold text-xs">CREATE SECTION</button>
             </div>
         </div>
 
@@ -59,8 +59,6 @@
                         <tr class="border-b border-white/10 text-gray-400">
                             <th class="p-2">Gmail</th>
                             <th class="p-2">Product/ID</th>
-                            <th class="p-2">Section</th>
-                            <th class="p-2">Price</th>
                             <th class="p-2">Telegram Contact</th>
                             <th class="p-2">Status</th>
                             <th class="p-2">Actions</th>
@@ -73,10 +71,8 @@
     </section>
 
     <main id="main-content" class="max-w-6xl mx-auto mt-10 px-4 pb-20">
-        <div class="section-container">
-            <h3 class="text-3xl font-bold mb-6 opacity-80">Marketplace</h3>
-            <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
-        </div>
+        <h3 class="text-3xl font-bold mb-6 opacity-80">Marketplace</h3>
+        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
     </main>
 
     <script type="text/javascript">

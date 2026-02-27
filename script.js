@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// --- CONFIG ---
+// --- FIREBASE CONFIG (Replace with your own) ---
 const firebaseConfig = { apiKey: "YOUR_API_KEY", authDomain: "YOUR_PROJECT.firebaseapp.com", projectId: "YOUR_PROJECT_ID", storageBucket: "YOUR_PROJECT.appspot.com", messagingSenderId: "YOUR_ID", appId: "YOUR_APP_ID" };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -11,6 +11,13 @@ const provider = new GoogleAuthProvider();
 const ADMIN_EMAIL = "Plm159357258456a@gmail.com"; 
 const ADMIN_TELEGRAM_ID = "8004368400"; 
 const BOT_TOKEN = "YOUR_BOT_TOKEN"; 
+
+// --- LOGIN BUTTON FIX ---
+document.getElementById('login-btn').addEventListener('click', () => {
+    signInWithPopup(auth, provider).catch(err => console.error("Login failed:", err));
+});
+
+document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
 // --- AUTH MONITOR ---
 onAuthStateChanged(auth, (user) => {
@@ -26,10 +33,7 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-document.getElementById('login-btn').onclick = () => signInWithPopup(auth, provider);
-document.getElementById('logout-btn').onclick = () => signOut(auth);
-
-// --- BRANDING ---
+// --- BRANDING TOOL ---
 window.changeSiteName = () => {
     const name = document.getElementById('new-site-name').value;
     if (name) {
@@ -38,17 +42,18 @@ window.changeSiteName = () => {
         document.getElementById('new-site-name').value = "";
     }
 };
+document.getElementById('update-name-btn').onclick = window.changeSiteName;
 
 // --- ORDER LOGIC ---
 window.processOrder = async (name, price, cat) => {
     const user = auth.currentUser;
     if (!user) return alert("Login with Google first!");
 
-    const customerTelegram = prompt("Enter your Telegram handle or number for contact:");
-    if (!customerTelegram) return alert("Contact info required to complete order.");
+    const customerTelegram = prompt("Enter your Telegram handle or number:");
+    if (!customerTelegram) return;
 
     const qty = document.getElementById(`qty-${name}`).value;
-    const orderID = Math.floor(1000 + Math.random() * 9000);
+    const orderID = Math.floor(Math.random() * 9000) + 1000;
     const totalPrice = (price * qty).toFixed(2);
 
     const botMessage = `🚀 <b>NEW ORDER</b>\n\n<b>ID:</b> #${orderID}\n<b>Section:</b> ${cat}\n<b>Item:</b> ${name}\n<b>Price:</b> $${totalPrice}\n\n<b>Customer:</b> ${user.displayName}\n<b>Gmail:</b> ${user.email}\n<b>Contact:</b> ${customerTelegram}`;
@@ -59,7 +64,7 @@ window.processOrder = async (name, price, cat) => {
     });
 
     logOrderToAdmin(user, name, cat, totalPrice, orderID, customerTelegram);
-    alert("Request sent! We will contact you via Telegram soon.");
+    alert("Request successful! We will contact you via Telegram soon.");
 };
 
 function logOrderToAdmin(user, name, cat, price, id, tel) {
@@ -83,7 +88,7 @@ window.uploadProduct = async () => {
     const price = document.getElementById('prod-price').value;
     const file = document.getElementById('prod-img').files[0];
 
-    if (!name || !file) return alert("Details missing.");
+    if (!name || !file) return alert("Missing data.");
 
     const compressed = await imageCompression(file, { maxSizeMB: 0.1, maxWidthOrHeight: 800 });
     const reader = new FileReader();
@@ -96,20 +101,24 @@ window.uploadProduct = async () => {
         grid.appendChild(card);
     };
 };
+document.getElementById('add-prod-btn').onclick = window.uploadProduct;
 
+// --- DEATH PROTOCOL ---
 window.triggerDeath = () => {
-    if(confirm("Confirm: Wash away all site data?")) {
+    if(confirm("Permanently wipe all owner data?")) {
         document.body.innerHTML = `<div class='h-screen flex flex-col items-center justify-center text-red-700'><i class='fas fa-skull text-8xl mb-4'></i><p class='text-2xl font-black'>DATA WASHED AWAY</p></div>`;
         auth.signOut();
         localStorage.clear();
     }
 };
+document.getElementById('death-btn').onclick = window.triggerDeath;
 
 window.addNewSection = () => {
     const title = document.getElementById('section-name').value;
     const main = document.getElementById('main-content');
     const div = document.createElement('div');
     div.className = "mb-12 pt-8 border-t border-white/5 fade-in";
-    div.innerHTML = `<div class='flex justify-between'><h3 class='text-2xl font-bold mb-6'>${title}</h3><button class='admin-only text-red-500' onclick='this.parentElement.parentElement.remove()'>Remove Section</button></div><div class='grid grid-cols-2 md:grid-cols-4 gap-6'></div>`;
+    div.innerHTML = `<div class='flex justify-between'><h3 class='text-2xl font-bold mb-6'>${title}</h3><button class='admin-only text-red-500' onclick='this.parentElement.parentElement.remove()'>X</button></div><div class='grid grid-cols-2 md:grid-cols-4 gap-6'></div>`;
     main.appendChild(div);
 };
+document.getElementById('add-section-btn').onclick = window.addNewSection;
