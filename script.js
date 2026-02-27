@@ -1,119 +1,115 @@
-let storeData = JSON.parse(localStorage.getItem('nevoStoreData')) || [];
-let siteName = localStorage.getItem('nevoSiteName') || "Nevo Stick";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-const adminKey = { 
-    email: "plm159357258456a@Gmail.com", 
-    pass: "19372846Aa#" 
+// --- CONFIG ---
+const firebaseConfig = { apiKey: "YOUR_API_KEY", authDomain: "YOUR_PROJECT.firebaseapp.com", projectId: "YOUR_PROJECT_ID", storageBucket: "YOUR_PROJECT.appspot.com", messagingSenderId: "YOUR_ID", appId: "YOUR_APP_ID" };
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// --- OWNER DATA ---
+const ADMIN_EMAIL = "Plm159357258456a@gmail.com"; 
+const ADMIN_TELEGRAM_ID = "8004368400"; 
+const BOT_TOKEN = "YOUR_BOT_TOKEN"; 
+
+// --- AUTH MONITOR ---
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        document.getElementById('login-btn').classList.add('hidden');
+        document.getElementById('user-info').classList.remove('hidden');
+        document.getElementById('user-pic').src = user.photoURL;
+        if (user.email === ADMIN_EMAIL) document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+    } else {
+        document.getElementById('login-btn').classList.remove('hidden');
+        document.getElementById('user-info').classList.add('hidden');
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+    }
+});
+
+document.getElementById('login-btn').onclick = () => signInWithPopup(auth, provider);
+document.getElementById('logout-btn').onclick = () => signOut(auth);
+
+// --- BRANDING ---
+window.changeSiteName = () => {
+    const name = document.getElementById('new-site-name').value;
+    if (name) {
+        document.getElementById('site-logo').innerText = name;
+        document.getElementById('page-title').innerText = name;
+        document.getElementById('new-site-name').value = "";
+    }
 };
 
-// إعدادات التليجرام (يجب على المشتري ملؤها ليعمل البوت)
-const tgConfig = {
-    token: "", 
-    chatId: "" 
+// --- ORDER LOGIC ---
+window.processOrder = async (name, price, cat) => {
+    const user = auth.currentUser;
+    if (!user) return alert("Login with Google first!");
+
+    const customerTelegram = prompt("Enter your Telegram handle or number for contact:");
+    if (!customerTelegram) return alert("Contact info required to complete order.");
+
+    const qty = document.getElementById(`qty-${name}`).value;
+    const orderID = Math.floor(1000 + Math.random() * 9000);
+    const totalPrice = (price * qty).toFixed(2);
+
+    const botMessage = `🚀 <b>NEW ORDER</b>\n\n<b>ID:</b> #${orderID}\n<b>Section:</b> ${cat}\n<b>Item:</b> ${name}\n<b>Price:</b> $${totalPrice}\n\n<b>Customer:</b> ${user.displayName}\n<b>Gmail:</b> ${user.email}\n<b>Contact:</b> ${customerTelegram}`;
+
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: ADMIN_TELEGRAM_ID, text: botMessage, parse_mode: "HTML" })
+    });
+
+    logOrderToAdmin(user, name, cat, totalPrice, orderID, customerTelegram);
+    alert("Request sent! We will contact you via Telegram soon.");
 };
 
-let activeOrder = null;
-
-function applySettings() {
-    document.getElementById('site-logo').innerText = siteName;
-    document.getElementById('tab-title').innerText = siteName;
-    document.getElementById('welcome-title').innerText = `Welcome to ${siteName}`;
+function logOrderToAdmin(user, name, cat, price, id, tel) {
+    const table = document.getElementById('order-log-table');
+    const row = document.createElement('tr');
+    row.className = "border-b border-white/5";
+    row.innerHTML = `<td class="p-2">${user.email}</td><td class="p-2">${name} (#${id})</td><td class="p-2">${cat}</td><td class="p-2">$${price}</td><td class="p-2"><b>${tel}</b></td><td class="p-2"><span class="status-pending" id="st-${id}">Pending</span></td><td class="p-2"><button onclick="markDone('${id}')" class="text-green-500 mr-2"><i class="fas fa-check"></i></button><button onclick="this.closest('tr').remove()" class="text-red-500"><i class="fas fa-trash"></i></button></td>`;
+    table.prepend(row);
 }
 
-function login() {
-    let email = document.getElementById('adm-email').value;
-    let pass = document.getElementById('adm-pass').value;
-    if(email === adminKey.email && pass === adminKey.pass) {
-        document.getElementById('admin-controls').style.display = 'block';
-        document.getElementById('auth-section').style.display = 'none';
-        document.getElementById('logout-btn').style.display = 'block';
-        renderSidebar();
-    } else { alert("Login Failed!"); }
-}
+window.markDone = (id) => {
+    const el = document.getElementById(`st-${id}`);
+    el.innerText = "Completed";
+    el.className = "status-completed";
+};
 
-function updateSiteName() {
-    let name = document.getElementById('new-site-name').value;
-    if(name) {
-        siteName = name;
-        localStorage.setItem('nevoSiteName', siteName);
-        applySettings();
-        alert("Brand Name Updated!");
-    }
-}
+// --- PRODUCT MANAGEMENT ---
+window.uploadProduct = async () => {
+    const name = document.getElementById('prod-name').value;
+    const cat = document.getElementById('prod-category').value;
+    const price = document.getElementById('prod-price').value;
+    const file = document.getElementById('prod-img').files[0];
 
-function addSection() {
-    let name = document.getElementById('sec-name').value;
-    if(name) {
-        storeData.push({ id: Date.now(), name: name, products: [] });
-        save();
-    }
-}
+    if (!name || !file) return alert("Details missing.");
 
-function addProduct() {
-    let secId = document.getElementById('sec-list').value;
-    let p = {
-        name: document.getElementById('p-name').value,
-        desc: document.getElementById('p-desc').value,
-        price: document.getElementById('p-price').value,
-        img: document.getElementById('p-img').value
+    const compressed = await imageCompression(file, { maxSizeMB: 0.1, maxWidthOrHeight: 800 });
+    const reader = new FileReader();
+    reader.readAsDataURL(compressed);
+    reader.onloadend = () => {
+        const grid = document.getElementById('product-grid');
+        const card = document.createElement('div');
+        card.className = "glass p-4 rounded-xl relative group fade-in";
+        card.innerHTML = `<button class="admin-only absolute top-2 right-2 bg-red-600 text-white w-5 h-5 rounded-full text-[10px]" onclick="this.parentElement.remove()">X</button><img src="${reader.result}" class="w-full h-32 object-cover rounded-lg mb-3"><p class="text-[10px] text-blue-400 font-bold uppercase">${cat}</p><h4 class="font-bold text-sm">${name}</h4><div class="flex items-center justify-between mt-3 mb-3"><span class="text-green-400 font-bold">$${price}</span><input type="number" id="qty-${name}" value="1" min="1" class="w-10 bg-slate-900 border border-slate-700 rounded text-[10px] text-center"></div><button onclick="processOrder('${name}', '${price}', '${cat}')" class="w-full bg-blue-600 py-2 rounded text-[10px] font-bold uppercase">Order Now</button>`;
+        grid.appendChild(card);
     };
-    let sec = storeData.find(s => s.id == secId);
-    if(sec) { sec.products.push(p); save(); }
-}
+};
 
-function save() {
-    localStorage.setItem('nevoStoreData', JSON.stringify(storeData));
-    renderSidebar();
-}
+window.triggerDeath = () => {
+    if(confirm("Confirm: Wash away all site data?")) {
+        document.body.innerHTML = `<div class='h-screen flex flex-col items-center justify-center text-red-700'><i class='fas fa-skull text-8xl mb-4'></i><p class='text-2xl font-black'>DATA WASHED AWAY</p></div>`;
+        auth.signOut();
+        localStorage.clear();
+    }
+};
 
-function renderSidebar() {
-    const menu = document.getElementById('sections-menu');
-    const select = document.getElementById('sec-list');
-    menu.innerHTML = ''; select.innerHTML = '';
-    storeData.forEach(sec => {
-        menu.innerHTML += `<li onclick="viewCategory(${sec.id})">${sec.name}</li>`;
-        select.innerHTML += `<option value="${sec.id}">${sec.name}</option>`;
-    });
-}
-
-function viewCategory(id) {
-    const display = document.getElementById('display-area');
-    const cat = storeData.find(c => c.id == id);
-    if(!cat) return;
-    let html = `<h2>${cat.name}</h2><div class="product-grid">`;
-    cat.products.forEach(p => {
-        html += `<div class="product-card">
-            <img src="${p.img || 'https://via.placeholder.com/150'}">
-            <h4>${p.name}</h4>
-            <div class="price">${p.price}</div>
-            <button onclick="openOrderModal('${cat.name}', '${p.name}', '${p.price}')">Order Request</button>
-        </div>`;
-    });
-    display.innerHTML = html + `</div>`;
-}
-
-function openOrderModal(cat, prod, price) {
-    activeOrder = { cat, prod, price };
-    document.getElementById('order-details').innerText = `Item: ${prod} (${price})`;
-    document.getElementById('order-modal').style.display = 'block';
-}
-
-function sendOrder() {
-    const email = document.getElementById('customer-email').value;
-    const qty = document.getElementById('order-qty').value;
-
-    if(!email) { alert("Enter your email"); return; }
-    if(!tgConfig.token) { alert("Admin Telegram Bot is not configured yet."); return; }
-
-    const message = `🛒 New Purchase Request!\n\n📧 Client Email: ${email}\n📂 Category: ${activeOrder.cat}\n📦 Product: ${activeOrder.prod}\n💰 Listed Price: ${activeOrder.price}\n🔢 Quantity: ${qty}\n\n⚠️ Contact the client on email to discuss payment and Telegram deal.`;
-
-    fetch(`https://api.telegram.org/bot${tgConfig.token}/sendMessage?chat_id=${tgConfig.chatId}&text=${encodeURIComponent(message)}`)
-    .then(() => { alert("Your order request has been sent to the admin. Check your email soon!"); closeModal(); })
-    .catch(() => alert("Error. Admin Bot not found."));
-}
-
-function closeModal() { document.getElementById('order-modal').style.display = 'none'; }
-function logout() { location.reload(); }
-
-applySettings();
-renderSidebar();
+window.addNewSection = () => {
+    const title = document.getElementById('section-name').value;
+    const main = document.getElementById('main-content');
+    const div = document.createElement('div');
+    div.className = "mb-12 pt-8 border-t border-white/5 fade-in";
+    div.innerHTML = `<div class='flex justify-between'><h3 class='text-2xl font-bold mb-6'>${title}</h3><button class='admin-only text-red-500' onclick='this.parentElement.parentElement.remove()'>Remove Section</button></div><div class='grid grid-cols-2 md:grid-cols-4 gap-6'></div>`;
+    main.appendChild(div);
+};
