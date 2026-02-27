@@ -3,84 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Nevo Stick | Official</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    <meta name="description" content="Nevo Stick - Professional Developer Portfolio & Service Showcase">
+    <title>Nevo Stick - Web Development & Video Editing</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-
-    <nav class="nav-glass p-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 id="site-logo" class="text-xl font-bold text-blue-500 tracking-tighter uppercase">NEVO STICK</h1>
-        <div class="flex items-center gap-4">
-            <div id="google_translate_element"></div>
-            <button id="login-btn" class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold">Google Login</button>
-            <div id="user-info" class="hidden flex items-center gap-3">
-                <span class="admin-only bg-red-600 text-[10px] px-2 py-0.5 rounded-full font-bold">OWNER</span>
-                <img id="user-pic" class="w-8 h-8 rounded-full border border-blue-500">
-                <button id="logout-btn" class="text-xs text-gray-400 hover:text-white"><i class="fas fa-power-off"></i></button>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="site-logo">
+                <h1 id="siteName"></h1>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="#home" class="nav-link">Home</a></li>
+                <li><a href="#services" class="nav-link">Services</a></li>
+                <li><a href="#portfolio" class="nav-link">Portfolio</a></li>
+                <li id="authButtonContainer"></li>
+            </ul>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
             </div>
         </div>
     </nav>
 
-    <section id="admin-panel" class="admin-only max-w-6xl mx-auto mt-8 p-6 glass rounded-2xl border-l-4 border-red-600 fade-in">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-red-500">Admin Dashboard</h2>
-            <button id="death-btn" class="bg-black text-red-600 border border-red-900 px-4 py-1 rounded text-xs hover:bg-red-600 transition">EXECUTE DEATH</button>
+    <!-- Home Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h2>Welcome to <span id="homeTitle"></span></h2>
+            <p>Professional Web Development & Creative Video Editing Services</p>
+            <button class="cta-button" id="ctaButton">Get Started</button>
         </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="space-y-3 p-4 bg-white/5 rounded-xl border border-white/10">
-                <p class="text-xs font-bold text-yellow-500 uppercase">Branding</p>
-                <input type="text" id="new-site-name" placeholder="Rename Website" class="admin-input">
-                <button id="update-name-btn" class="w-full bg-yellow-600 py-2 rounded font-bold text-xs">UPDATE NAME</button>
-            </div>
-            <div class="space-y-3 p-4 bg-white/5 rounded-xl border border-white/10">
-                <p class="text-xs font-bold text-blue-400 uppercase">Inventory</p>
-                <input type="text" id="prod-name" placeholder="Product Name" class="admin-input">
-                <input type="text" id="prod-category" placeholder="Category" class="admin-input">
-                <input type="number" id="prod-price" placeholder="Price" class="admin-input">
-                <input type="file" id="prod-img" accept="image/*" class="text-[10px] text-gray-500">
-                <button id="add-prod-btn" class="w-full bg-blue-600 py-2 rounded font-bold text-xs">ADD PRODUCT</button>
-            </div>
-            <div class="space-y-3 p-4 bg-white/5 rounded-xl border border-white/10">
-                <p class="text-xs font-bold text-purple-400 uppercase">Sections</p>
-                <input type="text" id="section-name" placeholder="Section Title" class="admin-input">
-                <button id="add-section-btn" class="w-full bg-purple-600 py-2 rounded font-bold text-xs">CREATE SECTION</button>
-            </div>
-        </div>
+    </section>
 
-        <div class="mt-10 p-4 bg-white/5 rounded-xl border border-white/10">
-            <p class="text-xs font-bold text-green-400 uppercase mb-4">Agriculture Section (Request Log)</p>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead>
-                        <tr class="border-b border-white/10 text-gray-400">
-                            <th class="p-2">Gmail</th>
-                            <th class="p-2">Product/ID</th>
-                            <th class="p-2">Telegram Contact</th>
-                            <th class="p-2">Status</th>
-                            <th class="p-2">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="order-log-table"></tbody>
-                </table>
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <h2>Our Services</h2>
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-icon">💻</div>
+                <h3>Web Development</h3>
+                <p>Modern, responsive websites and web applications built with cutting-edge technologies.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">🎬</div>
+                <h3>Video Editing</h3>
+                <p>Professional video editing, color grading, and post-production for your creative projects.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">⚙️</div>
+                <h3>Technical Consulting</h3>
+                <p>Expert guidance on technology stack selection and project architecture.</p>
             </div>
         </div>
     </section>
 
-    <main id="main-content" class="max-w-6xl mx-auto mt-10 px-4 pb-20">
-        <h3 class="text-3xl font-bold mb-6 opacity-80">Marketplace</h3>
-        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
-    </main>
+    <!-- Portfolio Section -->
+    <section id="portfolio" class="portfolio">
+        <h2>Portfolio</h2>
+        <div class="portfolio-grid" id="portfolioGrid">
+            <div class="portfolio-item">
+                <img src="https://via.placeholder.com/300x200" alt="Project 1">
+                <h3>Web Project 1</h3>
+                <p>A modern e-commerce platform with payment integration.</p>
+            </div>
+            <div class="portfolio-item">
+                <img src="https://via.placeholder.com/300x200" alt="Project 2">
+                <h3>Video Edit 1</h3>
+                <p>Commercial video production for a tech startup.</p>
+            </div>
+            <div class="portfolio-item">
+                <img src="https://via.placeholder.com/300x200" alt="Project 3">
+                <h3>Web Project 2</h3>
+                <p>Real-time collaboration dashboard with analytics.</p>
+            </div>
+        </div>
+    </section>
 
-    <script type="text/javascript">
-        function googleTranslateElementInit() {
-            new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
-        }
-    </script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-    <script type="module" src="app.js"></script>
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <h2>Get In Touch</h2>
+        <p>Ready to start your next project? Contact us today!</p>
+        <a href="[INSERT YOUR TELEGRAM BOT LINK HERE]" class="telegram-btn" id="telegramBtn" target="_blank">
+            💬 Contact via Telegram
+        </a>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 <span id="footerSiteName"></span>. All rights reserved.</p>
+    </footer>
+
+    <!-- Google Sign-In Container (Hidden by Default) -->
+    <div id="googleAuthContainer"></div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Sign In Required</h2>
+            <p>Please sign in with your Google account to access dashboard features.</p>
+            <div id="googleSignInButton"></div>
+            <p class="modal-note">Your email must be authorized to access management features.</p>
+            <button class="close-modal" id="closeModal">&times;</button>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard (Hidden until Authenticated) -->
+    <div id="adminDashboard" class="admin-dashboard hidden">
+        <div class="dashboard-container">
+            <h2>Admin Dashboard</h2>
+            <div class="admin-info">
+                <p>Welcome, <span id="userEmail"></span></p>
+                <p id="adminStatus"></p>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
+            </div>
+            <div class="admin-controls">
+                <h3>Site Configuration</h3>
+                <div class="config-item">
+                    <label for="siteNameInput">Site Name:</label>
+                    <input type="text" id="siteNameInput" placeholder="Enter site name">
+                </div>
+                <div class="config-item">
+                    <label for="telegramLinkInput">Telegram Bot Link:</label>
+                    <input type="text" id="telegramLinkInput" placeholder="Enter Telegram bot link">
+                </div>
+                <button class="save-btn" id="saveConfigBtn">Save Configuration</button>
+                <p id="saveMessage"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="spinner hidden"></div>
+
+    <script src="auth.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

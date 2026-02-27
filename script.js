@@ -1,124 +1,328 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// ============================================
+// NEVO STICK - AUTHENTICATION SYSTEM
+// Google Authentication & Admin Management
+// ============================================
 
-// --- FIREBASE CONFIG (Replace with your own) ---
-const firebaseConfig = { apiKey: "YOUR_API_KEY", authDomain: "YOUR_PROJECT.firebaseapp.com", projectId: "YOUR_PROJECT_ID", storageBucket: "YOUR_PROJECT.appspot.com", messagingSenderId: "YOUR_ID", appId: "YOUR_APP_ID" };
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
-
-// --- OWNER DATA ---
-const ADMIN_EMAIL = "Plm159357258456a@gmail.com"; 
-const ADMIN_TELEGRAM_ID = "8004368400"; 
-const BOT_TOKEN = "YOUR_BOT_TOKEN"; 
-
-// --- LOGIN BUTTON FIX ---
-document.getElementById('login-btn').addEventListener('click', () => {
-    signInWithPopup(auth, provider).catch(err => console.error("Login failed:", err));
-});
-
-document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
-
-// --- AUTH MONITOR ---
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        document.getElementById('login-btn').classList.add('hidden');
-        document.getElementById('user-info').classList.remove('hidden');
-        document.getElementById('user-pic').src = user.photoURL;
-        if (user.email === ADMIN_EMAIL) document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-    } else {
-        document.getElementById('login-btn').classList.remove('hidden');
-        document.getElementById('user-info').classList.add('hidden');
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-    }
-});
-
-// --- BRANDING TOOL ---
-window.changeSiteName = () => {
-    const name = document.getElementById('new-site-name').value;
-    if (name) {
-        document.getElementById('site-logo').innerText = name;
-        document.getElementById('page-title').innerText = name;
-        document.getElementById('new-site-name').value = "";
-    }
-};
-document.getElementById('update-name-btn').onclick = window.changeSiteName;
-
-// --- ORDER LOGIC ---
-window.processOrder = async (name, price, cat) => {
-    const user = auth.currentUser;
-    if (!user) return alert("Login with Google first!");
-
-    const customerTelegram = prompt("Enter your Telegram handle or number:");
-    if (!customerTelegram) return;
-
-    const qty = document.getElementById(`qty-${name}`).value;
-    const orderID = Math.floor(Math.random() * 9000) + 1000;
-    const totalPrice = (price * qty).toFixed(2);
-
-    const botMessage = `🚀 <b>NEW ORDER</b>\n\n<b>ID:</b> #${orderID}\n<b>Section:</b> ${cat}\n<b>Item:</b> ${name}\n<b>Price:</b> $${totalPrice}\n\n<b>Customer:</b> ${user.displayName}\n<b>Gmail:</b> ${user.email}\n<b>Contact:</b> ${customerTelegram}`;
-
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: ADMIN_TELEGRAM_ID, text: botMessage, parse_mode: "HTML" })
-    });
-
-    logOrderToAdmin(user, name, cat, totalPrice, orderID, customerTelegram);
-    alert("Request successful! We will contact you via Telegram soon.");
+// ============================================
+// CONFIGURATION CONSTANTS (EASY TO UPDATE)
+// ============================================
+const CONFIG = {
+    SITE_NAME: 'Nevo Stick',
+    SUPER_ADMIN_EMAIL: 'Plm159357258456a@gmail.com',
+    TELEGRAM_BOT_LINK: '[INSERT YOUR TELEGRAM BOT LINK HERE]',
+    STORAGE_PREFIX: 'nevoStick_',
 };
 
-function logOrderToAdmin(user, name, cat, price, id, tel) {
-    const table = document.getElementById('order-log-table');
-    const row = document.createElement('tr');
-    row.className = "border-b border-white/5";
-    row.innerHTML = `<td class="p-2">${user.email}</td><td class="p-2">${name} (#${id})</td><td class="p-2">${cat}</td><td class="p-2">$${price}</td><td class="p-2"><b>${tel}</b></td><td class="p-2"><span class="status-pending" id="st-${id}">Pending</span></td><td class="p-2"><button onclick="markDone('${id}')" class="text-green-500 mr-2"><i class="fas fa-check"></i></button><button onclick="this.closest('tr').remove()" class="text-red-500"><i class="fas fa-trash"></i></button></td>`;
-    table.prepend(row);
+// ============================================
+// AUTHENTICATION STATE MANAGEMENT
+// ============================================
+const AUTH_STATE = {
+    isAuthenticated: false,
+    user: null,
+    isSuperAdmin: false,
+    siteInitialized: false,
+};
+
+// ============================================
+// INITIALIZE GOOGLE SIGN-IN
+// ============================================
+window.onload = function () {
+    initializeApp();
+};
+
+function initializeApp() {
+    // Load configuration from localStorage
+    loadConfiguration();
+
+    // Update UI with site name
+    updateSiteNameInUI();
+
+    // Check if user is already logged in
+    checkAuthenticationStatus();
+
+    // Initialize Google Sign-In
+    initializeGoogleSignIn();
+
+    // Setup event listeners
+    setupEventListeners();
 }
 
-window.markDone = (id) => {
-    const el = document.getElementById(`st-${id}`);
-    el.innerText = "Completed";
-    el.className = "status-completed";
-};
+// ============================================
+// GOOGLE SIGN-IN INITIALIZATION
+// ============================================
+function initializeGoogleSignIn() {
+    google.accounts.id.initialize({
+        client_id: 'YOUR_GOOGLE_CLIENT_ID_HERE', // Replace with your Google Client ID
+        callback: handleSignInResponse,
+        auto_select: false,
+        itp_support: true,
+    });
 
-// --- PRODUCT MANAGEMENT ---
-window.uploadProduct = async () => {
-    const name = document.getElementById('prod-name').value;
-    const cat = document.getElementById('prod-category').value;
-    const price = document.getElementById('prod-price').value;
-    const file = document.getElementById('prod-img').files[0];
-
-    if (!name || !file) return alert("Missing data.");
-
-    const compressed = await imageCompression(file, { maxSizeMB: 0.1, maxWidthOrHeight: 800 });
-    const reader = new FileReader();
-    reader.readAsDataURL(compressed);
-    reader.onloadend = () => {
-        const grid = document.getElementById('product-grid');
-        const card = document.createElement('div');
-        card.className = "glass p-4 rounded-xl relative group fade-in";
-        card.innerHTML = `<button class="admin-only absolute top-2 right-2 bg-red-600 text-white w-5 h-5 rounded-full text-[10px]" onclick="this.parentElement.remove()">X</button><img src="${reader.result}" class="w-full h-32 object-cover rounded-lg mb-3"><p class="text-[10px] text-blue-400 font-bold uppercase">${cat}</p><h4 class="font-bold text-sm">${name}</h4><div class="flex items-center justify-between mt-3 mb-3"><span class="text-green-400 font-bold">$${price}</span><input type="number" id="qty-${name}" value="1" min="1" class="w-10 bg-slate-900 border border-slate-700 rounded text-[10px] text-center"></div><button onclick="processOrder('${name}', '${price}', '${cat}')" class="w-full bg-blue-600 py-2 rounded text-[10px] font-bold uppercase">Order Now</button>`;
-        grid.appendChild(card);
-    };
-};
-document.getElementById('add-prod-btn').onclick = window.uploadProduct;
-
-// --- DEATH PROTOCOL ---
-window.triggerDeath = () => {
-    if(confirm("Permanently wipe all owner data?")) {
-        document.body.innerHTML = `<div class='h-screen flex flex-col items-center justify-center text-red-700'><i class='fas fa-skull text-8xl mb-4'></i><p class='text-2xl font-black'>DATA WASHED AWAY</p></div>`;
-        auth.signOut();
-        localStorage.clear();
+    // Render sign-in button in modal
+    if (document.getElementById('googleSignInButton')) {
+        google.accounts.id.renderButton(
+            document.getElementById('googleSignInButton'),
+            {
+                theme: 'outline',
+                size: 'large',
+                width: '300',
+            }
+        );
     }
-};
-document.getElementById('death-btn').onclick = window.triggerDeath;
+}
 
-window.addNewSection = () => {
-    const title = document.getElementById('section-name').value;
-    const main = document.getElementById('main-content');
-    const div = document.createElement('div');
-    div.className = "mb-12 pt-8 border-t border-white/5 fade-in";
-    div.innerHTML = `<div class='flex justify-between'><h3 class='text-2xl font-bold mb-6'>${title}</h3><button class='admin-only text-red-500' onclick='this.parentElement.parentElement.remove()'>X</button></div><div class='grid grid-cols-2 md:grid-cols-4 gap-6'></div>`;
-    main.appendChild(div);
-};
-document.getElementById('add-section-btn').onclick = window.addNewSection;
+// ============================================
+// HANDLE SIGN-IN RESPONSE
+// ============================================
+function handleSignInResponse(response) {
+    if (response.credential) {
+        // Decode JWT token
+        const base64Url = response.credential.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+            atob(base64)
+                .split('')
+                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+        );
+
+        const user = JSON.parse(jsonPayload);
+        AUTH_STATE.user = user;
+        AUTH_STATE.isAuthenticated = true;
+        AUTH_STATE.isSuperAdmin = user.email === CONFIG.SUPER_ADMIN_EMAIL;
+
+        // Check if this is the first admin login
+        if (AUTH_STATE.isSuperAdmin && !getStorageData('siteInitialized')) {
+            AUTH_STATE.siteInitialized = true;
+            setStorageData('siteInitialized', true);
+        }
+
+        // Save user data
+        setStorageData('user', user);
+
+        // Close modal and show admin dashboard
+        document.getElementById('authModal').classList.add('hidden');
+        showAdminDashboard();
+
+        console.log('User authenticated:', user.email);
+    }
+}
+
+// ============================================
+// CHECK AUTHENTICATION STATUS
+// ============================================
+function checkAuthenticationStatus() {
+    const storedUser = getStorageData('user');
+
+    if (storedUser) {
+        AUTH_STATE.user = storedUser;
+        AUTH_STATE.isAuthenticated = true;
+        AUTH_STATE.isSuperAdmin = storedUser.email === CONFIG.SUPER_ADMIN_EMAIL;
+        AUTH_STATE.siteInitialized = getStorageData('siteInitialized') || false;
+
+        // Show appropriate UI
+        updateAuthenticationUI();
+    }
+}
+
+// ============================================
+// UPDATE AUTHENTICATION UI
+// ============================================
+function updateAuthenticationUI() {
+    const authContainer = document.getElementById('authButtonContainer');
+
+    if (AUTH_STATE.isAuthenticated) {
+        // User is logged in - show logout button
+        const logoutBtn = document.createElement('button');
+        logoutBtn.textContent = 'Logout';
+        logoutBtn.className = 'nav-link';
+        logoutBtn.style.cursor = 'pointer';
+        logoutBtn.onclick = handleLogout;
+        authContainer.innerHTML = '';
+        authContainer.appendChild(logoutBtn);
+
+        // Show admin dashboard for authenticated users
+        showAdminDashboard();
+    } else {
+        // User is not logged in - show login button
+        const loginBtn = document.createElement('button');
+        loginBtn.textContent = 'Sign In';
+        loginBtn.className = 'nav-link';
+        loginBtn.style.cursor = 'pointer';
+        loginBtn.onclick = showAuthModal;
+        authContainer.innerHTML = '';
+        authContainer.appendChild(loginBtn);
+    }
+}
+
+// ============================================
+// SHOW AUTHENTICATION MODAL
+// ============================================
+function showAuthModal() {
+    document.getElementById('authModal').classList.remove('hidden');
+    initializeGoogleSignIn();
+}
+
+// ============================================
+// CLOSE AUTHENTICATION MODAL
+// ============================================
+function closeAuthModal() {
+    document.getElementById('authModal').classList.add('hidden');
+}
+
+// ============================================
+// SHOW ADMIN DASHBOARD
+// ============================================
+function showAdminDashboard() {
+    if (!AUTH_STATE.isAuthenticated) return;
+
+    const dashboard = document.getElementById('adminDashboard');
+    dashboard.classList.remove('hidden');
+
+    // Update user information
+    document.getElementById('userEmail').textContent = AUTH_STATE.user.email;
+
+    // Set admin status
+    const adminStatus = document.getElementById('adminStatus');
+    if (AUTH_STATE.isSuperAdmin) {
+        adminStatus.textContent = '✓ Super Admin - Full Access';
+        adminStatus.style.color = 'var(--success-color)';
+    } else {
+        adminStatus.textContent = '✗ Limited Access - Contact Super Admin';
+        adminStatus.style.color = 'var(--error-color)';
+    }
+
+    // Populate current config in inputs
+    document.getElementById('siteNameInput').value = CONFIG.SITE_NAME;
+    document.getElementById('telegramLinkInput').value = CONFIG.TELEGRAM_BOT_LINK;
+
+    // Only allow super admin to edit
+    if (!AUTH_STATE.isSuperAdmin) {
+        document.getElementById('siteNameInput').disabled = true;
+        document.getElementById('telegramLinkInput').disabled = true;
+        document.getElementById('saveConfigBtn').disabled = true;
+        document.querySelector('.admin-controls').style.opacity = '0.5';
+    }
+}
+
+// ============================================
+// HIDE ADMIN DASHBOARD
+// ============================================
+function hideAdminDashboard() {
+    document.getElementById('adminDashboard').classList.add('hidden');
+}
+
+// ============================================
+// HANDLE LOGOUT
+// ============================================
+function handleLogout() {
+    google.accounts.id.disableAutoSelect();
+    AUTH_STATE.isAuthenticated = false;
+    AUTH_STATE.user = null;
+    AUTH_STATE.isSuperAdmin = false;
+    removeStorageData('user');
+
+    hideAdminDashboard();
+    updateAuthenticationUI();
+
+    console.log('User logged out');
+}
+
+// ============================================
+// SAVE CONFIGURATION
+// ============================================
+function saveConfiguration() {
+    if (!AUTH_STATE.isSuperAdmin) {
+        showSaveMessage('Only Super Admin can save configurations', 'error');
+        return;
+    }
+
+    const newSiteName = document.getElementById('siteNameInput').value.trim();
+    const newTelegramLink = document.getElementById('telegramLinkInput').value.trim();
+
+    if (!newSiteName || !newTelegramLink) {
+        showSaveMessage('All fields are required', 'error');
+        return;
+    }
+
+    // Update config
+    CONFIG.SITE_NAME = newSiteName;
+    CONFIG.TELEGRAM_BOT_LINK = newTelegramLink;
+
+    // Save to localStorage
+    setStorageData('config', CONFIG);
+
+    // Update UI
+    updateSiteNameInUI();
+
+    showSaveMessage('Configuration saved successfully!', 'success');
+    console.log('Configuration updated:', CONFIG);
+}
+
+// ============================================
+// SHOW SAVE MESSAGE
+// ============================================
+function showSaveMessage(message, type) {
+    const messageElement = document.getElementById('saveMessage');
+    messageElement.textContent = message;
+    messageElement.className = type;
+
+    setTimeout(() => {
+        messageElement.textContent = '';
+        messageElement.className = '';
+    }, 3000);
+}
+
+// ============================================
+// UPDATE SITE NAME IN UI
+// ============================================
+function updateSiteNameInUI() {
+    document.getElementById('siteName').textContent = CONFIG.SITE_NAME;
+    document.getElementById('homeTitle').textContent = CONFIG.SITE_NAME;
+    document.getElementById('footerSiteName').textContent = CONFIG.SITE_NAME;
+
+    // Update Telegram button
+    const telegramBtn = document.getElementById('telegramBtn');
+    if (telegramBtn) {
+        telegramBtn.href = CONFIG.TELEGRAM_BOT_LINK;
+    }
+}
+
+// ============================================
+// LOCALSTORAGE MANAGEMENT
+// ============================================
+function setStorageData(key, value) {
+    const storageKey = CONFIG.STORAGE_PREFIX + key;
+    try {
+        localStorage.setItem(storageKey, JSON.stringify(value));
+    } catch (error) {
+        console.error('Error saving to localStorage:', error);
+    }
+}
+
+function getStorageData(key) {
+    const storageKey = CONFIG.STORAGE_PREFIX + key;
+    try {
+        const item = localStorage.getItem(storageKey);
+        return item ? JSON.parse(item) : null;
+    } catch (error) {
+        console.error('Error reading from localStorage:', error);
+        return null;
+    }
+}
+
+function removeStorageData(key) {
+    const storageKey = CONFIG.STORAGE_PREFIX + key;
+    try {
+        localStorage.removeItem(storageKey);
+    } catch (error) {
+        console.error('Error removing from localStorage:', error);
+    }
+}
+
+function loadConfiguration() {
+    const savedConfig = getStorageData('config');
+    if (savedConfig) {
+        Object.assign(CONFIG, savedConfig);
+    }
+}
