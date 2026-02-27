@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="tab-title">Nevo Stick | Online Catalog</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="google_translate_element"></div>
+
+    <header>
+        <h1 id="site-logo">Nevo Stick</h1>
+        <div id="auth-section">
+            <input type="email" id="adm-email" placeholder="Admin Email">
+            <input type="password" id="adm-pass" placeholder="Password">
+            <button onclick="login()">Login</button>
+        </div>
+        <button id="logout-btn" onclick="logout()" style="display:none;">Logout</button>
+    </header>
+
+    <div class="container">
+        <aside id="sidebar">
+            <h3 class="side-title">Categories</h3>
+            <ul id="sections-menu"></ul>
+            
+            <div id="admin-controls" style="display:none;">
+                <hr>
+                <h4>Site Settings</h4>
+                <input type="text" id="new-site-name" placeholder="Change Brand Name">
+                <button onclick="updateSiteName()">Save Name</button>
+                <hr>
+                <h4>Management</h4>
+                <input type="text" id="sec-name" placeholder="New Category Name">
+                <button onclick="addSection()">+ Add Category</button>
+                <hr>
+                <select id="sec-list"></select>
+                <input type="text" id="p-name" placeholder="Product Name">
+                <input type="text" id="p-desc" placeholder="Product Description">
+                <input type="text" id="p-price" placeholder="Price (e.g. 50$)">
+                <input type="text" id="p-img" placeholder="Image URL">
+                <button onclick="addProduct()">Publish</button>
+            </div>
+        </aside>
+
+        <main id="display-area">
+            <div class="welcome-screen">
+                <h2 id="welcome-title">Welcome</h2>
+                <p>Browse our catalog and order directly via Telegram.</p>
+            </div>
+        </main>
+    </div>
+
+    <div id="order-modal" class="modal">
+        <div class="modal-content">
+            <h3>Place Order Request</h3>
+            <p id="order-details" style="color: #333; font-weight: bold;"></p>
+            <input type="email" id="customer-email" placeholder="Your Email Address" required>
+            <div style="margin: 15px 0; color: #333;">
+                <label>Quantity: </label>
+                <input type="number" id="order-qty" value="1" min="1" style="width: 60px;">
+            </div>
+            <p style="font-size: 0.8rem; color: #666;">* No payment here. We will contact you on Telegram to finalize the deal.</p>
+            <div class="modal-btns">
+                <button onclick="sendOrder()">Send Order Request</button>
+                <button onclick="closeModal()" style="background:#666">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Admin Email: <a href="mailto:plm159357258456a@Gmail.com">plm159357258456a@Gmail.com</a></p>
+        <p>Support: <a href="#" id="tg-link">تليجرام</a></p>
+    </footer>
+
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script src="script.js"></script>
+</body>
+</html>
