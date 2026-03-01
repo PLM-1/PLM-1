@@ -1,144 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Nevo Stick - Professional Developer Portfolio & Service Showcase">
-    <title>Nevo Stick - Web Development & Video Editing</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>موقع المنتجات والطلبات متعدد اللغات</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="site-logo">
-                <h1 id="siteName"></h1>
-            </div>
-            <ul class="nav-menu" id="navMenu">
-                <li><a href="#home" class="nav-link">Home</a></li>
-                <li><a href="#services" class="nav-link">Services</a></li>
-                <li><a href="#portfolio" class="nav-link">Portfolio</a></li>
-                <li id="authButtonContainer"></li>
-            </ul>
-            <div class="hamburger" id="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </div>
-    </nav>
+<header>
+  <h1 id="title">موقع المنتجات والطلبات</h1>
+  <div id="language-select">
+    <label for="lang">اللغة:</label>
+    <select id="lang" onchange="changeLanguage()">
+      <option value="ar">العربية</option>
+      <option value="en">English</option>
+      <option value="fr">Français</option>
+      <option value="es">Español</option>
+      <option value="de">Deutsch</option>
+    </select>
+  </div>
+  <div id="login-section">
+    <input type="email" id="email" placeholder="ادخل بريدك الإلكتروني">
+    <button onclick="login()">تسجيل الدخول</button>
+  </div>
+</header>
 
-    <!-- Home Section -->
-    <section id="home" class="hero">
-        <div class="hero-content">
-            <h2>Welcome to <span id="homeTitle"></span></h2>
-            <p>Professional Web Development & Creative Video Editing Services</p>
-            <button class="cta-button" id="ctaButton">Get Started</button>
-        </div>
-    </section>
+<main>
+  <!-- قسم الزبون -->
+  <div id="customer-section">
+    <h2 id="customer-title">أرسل طلبك</h2>
+    <div id="products-display"></div>
+    <form id="order-form">
+      <input type="text" id="name" placeholder="الاسم الكامل" required>
+      <input type="email" id="user-email" placeholder="البريد الإلكتروني" required>
+      <input type="text" id="phone" placeholder="رقم الهاتف" required>
+      <input type="text" id="address" placeholder="العنوان بالتفصيل" required>
+      <div>
+        <label id="captcha-label">هل أنت لست روبوت؟</label>
+        <input type="checkbox" id="captcha" required> نعم
+      </div>
+      <button type="submit" id="order-btn">إرسال الطلب</button>
+    </form>
+    <p id="status"></p>
+  </div>
 
-    <!-- Services Section -->
-    <section id="services" class="services">
-        <h2>Our Services</h2>
-        <div class="services-grid">
-            <div class="service-card">
-                <div class="service-icon">💻</div>
-                <h3>Web Development</h3>
-                <p>Modern, responsive websites and web applications built with cutting-edge technologies.</p>
-            </div>
-            <div class="service-card">
-                <div class="service-icon">🎬</div>
-                <h3>Video Editing</h3>
-                <p>Professional video editing, color grading, and post-production for your creative projects.</p>
-            </div>
-            <div class="service-card">
-                <div class="service-icon">⚙️</div>
-                <h3>Technical Consulting</h3>
-                <p>Expert guidance on technology stack selection and project architecture.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Portfolio Section -->
-    <section id="portfolio" class="portfolio">
-        <h2>Portfolio</h2>
-        <div class="portfolio-grid" id="portfolioGrid">
-            <div class="portfolio-item">
-                <img src="https://via.placeholder.com/300x200" alt="Project 1">
-                <h3>Web Project 1</h3>
-                <p>A modern e-commerce platform with payment integration.</p>
-            </div>
-            <div class="portfolio-item">
-                <img src="https://via.placeholder.com/300x200" alt="Project 2">
-                <h3>Video Edit 1</h3>
-                <p>Commercial video production for a tech startup.</p>
-            </div>
-            <div class="portfolio-item">
-                <img src="https://via.placeholder.com/300x200" alt="Project 3">
-                <h3>Web Project 2</h3>
-                <p>Real-time collaboration dashboard with analytics.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section id="contact" class="contact">
-        <h2>Get In Touch</h2>
-        <p>Ready to start your next project? Contact us today!</p>
-        <a href="[INSERT YOUR TELEGRAM BOT LINK HERE]" class="telegram-btn" id="telegramBtn" target="_blank">
-            💬 Contact via Telegram
-        </a>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <p>&copy; 2026 <span id="footerSiteName"></span>. All rights reserved.</p>
-    </footer>
-
-    <!-- Google Sign-In Container (Hidden by Default) -->
-    <div id="googleAuthContainer"></div>
-
-    <!-- Auth Modal -->
-    <div id="authModal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Sign In Required</h2>
-            <p>Please sign in with your Google account to access dashboard features.</p>
-            <div id="googleSignInButton"></div>
-            <p class="modal-note">Your email must be authorized to access management features.</p>
-            <button class="close-modal" id="closeModal">&times;</button>
-        </div>
+  <!-- قسم المدير -->
+  <div id="admin-section" class="hidden">
+    <h2 id="admin-title">لوحة المدير</h2>
+    
+    <div id="sections-admin">
+      <h3 id="sections-title">الأقسام</h3>
+      <input type="text" id="new-section" placeholder="اسم القسم الجديد">
+      <button onclick="addSection()" id="add-section-btn">إضافة قسم</button>
+      <div id="sections-list"></div>
     </div>
 
-    <!-- Admin Dashboard (Hidden until Authenticated) -->
-    <div id="adminDashboard" class="admin-dashboard hidden">
-        <div class="dashboard-container">
-            <h2>Admin Dashboard</h2>
-            <div class="admin-info">
-                <p>Welcome, <span id="userEmail"></span></p>
-                <p id="adminStatus"></p>
-                <button class="logout-btn" id="logoutBtn">Logout</button>
-            </div>
-            <div class="admin-controls">
-                <h3>Site Configuration</h3>
-                <div class="config-item">
-                    <label for="siteNameInput">Site Name:</label>
-                    <input type="text" id="siteNameInput" placeholder="Enter site name">
-                </div>
-                <div class="config-item">
-                    <label for="telegramLinkInput">Telegram Bot Link:</label>
-                    <input type="text" id="telegramLinkInput" placeholder="Enter Telegram bot link">
-                </div>
-                <button class="save-btn" id="saveConfigBtn">Save Configuration</button>
-                <p id="saveMessage"></p>
-            </div>
-        </div>
+    <div id="products-admin">
+      <h3 id="products-title">المنتجات</h3>
+      <input type="text" id="product-name" placeholder="اسم المنتج">
+      <input type="text" id="product-desc" placeholder="وصف المنتج">
+      <input type="text" id="product-img" placeholder="رابط صورة المنتج">
+      <select id="product-section">
+        <option value="">اختر القسم</option>
+      </select>
+      <button onclick="addProduct()" id="add-product-btn">إضافة منتج</button>
+      <div id="products-list"></div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div id="loadingSpinner" class="spinner hidden"></div>
+    <div id="orders-admin">
+      <h3 id="orders-title">طلبات العملاء</h3>
+      <div id="orders-list"></div>
+    </div>
+  </div>
+</main>
 
-    <script src="auth.js"></script>
-    <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
